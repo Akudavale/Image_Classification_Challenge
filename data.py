@@ -55,9 +55,8 @@ class ChristmasImages(Dataset):
             return image
 
 
-def model_test(model, test_ds):
-    model.eval()  
-
+def model_test(model, test_ds): 
+    model.eval()
     predictions = []
     idx = []
 
@@ -80,7 +79,6 @@ def model_train(model, epochs, optimizer, scheduler, train_loader, loss_fn):
         train_loss, train_acc = 0, 0
 
         for batch, (X, y) in enumerate(train_loader):
-            print(batch)
             X, y = X.to(device), y.to(device)
 
             y_pred = model(X)
@@ -109,8 +107,8 @@ if __name__ == '__main__':
     torch.cuda.empty_cache()
 
     # Load the data and trasform
-    path = Path("C:\\Users\\HP\\Desktop\\SEM3\\Deep-Learning\\Winter Task\\task\\data")
-    test_path = Path("C:\\Users\\HP\\Desktop\\SEM3\\Deep-Learning\\Winter Task\\task\\data\\val")
+    path = Path("/home/g062386/DEEP Learning winter task/data")
+    test_path = Path("/home/g062386/DEEP Learning winter task/data/val")
     train_ds = ChristmasImages(path, training=True)
     test_ds = ChristmasImages(test_path, training=False)
 
@@ -118,32 +116,25 @@ if __name__ == '__main__':
     # divide data in bathes through Dataloder
     train_loader = DataLoader(dataset=train_ds, batch_size=32,shuffle=True)
     test_loader = DataLoader(test_ds, batch_size=1, shuffle=False)
-    #print("Data loded")
 
     # Define Architecture
     model = Network()
     model.to(device)
-    #print("model loded")
 
     # Define Loss functions
     loss_fn = nn.CrossEntropyLoss()
     optimizer = torch.optim.AdamW(model.parameters(), lr = 0.01)
     scheduler = lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1)
 
-    #print('training started')
     model_train(model=model, epochs=12, optimizer=optimizer,scheduler=scheduler,train_loader=train_loader,loss_fn=loss_fn)
     model.save_model()
 
     #loadmodel
-    test_model = torch.load("model.pkl",map_location=torch.device('cpu'))
-    #print("model loaded")
+    model.load_state_dict(torch.load("model.pkl"))
     
     #Predictions
-    result = model_test(model=test_model, dataset=test_ds)
+    result = model_test(model=model, test_ds=test_ds)
 
-    #print("obtained reslts")
     #save results
     results_df = pd.DataFrame({"Id": result[0], "Category": result[1]})
     results_df.to_csv("test_results.csv", index=False)
-
-    print("results saved to CSV")
