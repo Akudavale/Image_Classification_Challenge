@@ -1,16 +1,9 @@
-
-import torch
-import torch.nn as nn
-from torch.utils.data import Dataset,  DataLoader
+from torch.utils.data import Dataset
 from torchvision import transforms
 from torchvision.datasets import ImageFolder
-from torch.optim import lr_scheduler
 import os
-import pandas as pd
-from pathlib import Path
 from PIL import Image
 import natsort
-from model import Network
 
 class ChristmasImages(Dataset):
     def __init__(self, path, training=True):
@@ -19,22 +12,24 @@ class ChristmasImages(Dataset):
         self.path = path
         
         #For training data
-        self.transform1 = transforms.Compose([
+        self.Train_transform = transforms.Compose([
             transforms.Resize(256),
             transforms.CenterCrop(224),
+            #transforms.RandomHorizontalFlip(p=0.4),
+            #transforms.RandomVerticalFlip(p=0.6),
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
             ])
         
         #For validation data
-        self.transform2 = transforms.Compose([
+        self.Test_transform = transforms.Compose([
             transforms.Resize(256),
             transforms.ToTensor(),
             transforms.Normalize(mean= ([0.485, 0.456, 0.406]),std = ([0.229, 0.224, 0.225]))
             ])
         
         if self.training == True:
-            self.dataset = ImageFolder(root=self.path.joinpath('train'),transform=self.transform1)
+            self.dataset = ImageFolder(root=self.path.joinpath('train'),transform=self.Train_transform)
         else:
             self.path = path
             self.sorted_images = natsort.natsorted(os.listdir(self.path))          
@@ -51,90 +46,5 @@ class ChristmasImages(Dataset):
             return image, label
         else:           
             img = os.path.join(self.path,self.sorted_images[index])            
-            image = self.transform2(Image.open(img).convert("RGB")) 
+            image = self.Test_transform(Image.open(img).convert("RGB")) 
             return image
-
-
-def model_test(model, test_ds): 
-    model.eval()
-    predictions = []
-    idx = []
-
-    with torch.no_grad():
-        for i, X in enumerate(test_ds, 0):
-            X= X.unsqueeze(0)
-            pred = model(X)
-            _, predicted  = torch.max(pred, 1)
-            predictions.extend(predicted.cpu().numpy())
-            idx.append(i)
-
-    return (idx,predictions)
-
-
-def model_train(model, epochs, optimizer, scheduler, train_loader, loss_fn):
-
-    model.train()
-
-    for epoch in range(epochs):
-        train_loss, train_acc = 0, 0
-
-        for batch, (X, y) in enumerate(train_loader):
-            X, y = X.to(device), y.to(device)
-
-            y_pred = model(X)
-
-            loss = loss_fn(y_pred, y)
-            train_loss += loss.item()
-
-            optimizer.zero_grad()
-
-            loss.backward()
-
-            optimizer.step()
-
-            y_pred_class = torch.argmax(y_pred, dim=1)
-            train_acc += (y_pred_class == y).sum().item() / len(y_pred)
-
-        loss = train_loss / len(train_loader)
-        acc = train_acc / len(train_loader)
-
-        print(f"Epoch {epoch+1}/{epochs}  || Loss: {loss:.3f}  || Accuracy: {acc:.3f}")
-
-        scheduler.step() 
-
-if __name__ == '__main__':
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    torch.cuda.empty_cache()
-
-    # Load the data and trasform
-    path = Path("/home/g062386/DEEP Learning winter task/data")
-    test_path = Path("/home/g062386/DEEP Learning winter task/data/val")
-    train_ds = ChristmasImages(path, training=True)
-    test_ds = ChristmasImages(test_path, training=False)
-
-
-    # divide data in bathes through Dataloder
-    train_loader = DataLoader(dataset=train_ds, batch_size=32,shuffle=True)
-    test_loader = DataLoader(test_ds, batch_size=1, shuffle=False)
-
-    # Define Architecture
-    model = Network()
-    model.to(device)
-
-    # Define Loss functions
-    loss_fn = nn.CrossEntropyLoss()
-    optimizer = torch.optim.AdamW(model.parameters(), lr = 0.01)
-    scheduler = lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1)
-
-    model_train(model=model, epochs=12, optimizer=optimizer,scheduler=scheduler,train_loader=train_loader,loss_fn=loss_fn)
-    model.save_model()
-
-    #loadmodel
-    model.load_state_dict(torch.load("model.pkl"))
-    
-    #Predictions
-    result = model_test(model=model, test_ds=test_ds)
-
-    #save results
-    results_df = pd.DataFrame({"Id": result[0], "Category": result[1]})
-    results_df.to_csv("test_results.csv", index=False)
