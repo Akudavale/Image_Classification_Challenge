@@ -12,24 +12,25 @@ class ChristmasImages(Dataset):
         self.path = path
         
         #For training data
-        self.Train_transform = transforms.Compose([
+        self.transform1 = transforms.Compose([
             transforms.Resize(256),
             transforms.CenterCrop(224),
-            #transforms.RandomHorizontalFlip(p=0.4),
-            #transforms.RandomVerticalFlip(p=0.6),
+            transforms.RandomHorizontalFlip(p=0.4),
+            transforms.RandomVerticalFlip(p=0.6),
+            transforms.ColorJitter(brightness= 0.4, contrast=0.2, saturation= 0.4, hue=0.2),
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
             ])
         
         #For validation data
-        self.Test_transform = transforms.Compose([
+        self.transform2 = transforms.Compose([
             transforms.Resize(256),
             transforms.ToTensor(),
             transforms.Normalize(mean= ([0.485, 0.456, 0.406]),std = ([0.229, 0.224, 0.225]))
             ])
         
         if self.training == True:
-            self.dataset = ImageFolder(root=self.path.joinpath('train'),transform=self.Train_transform)
+            self.dataset = ImageFolder(root=self.path.joinpath('train'),transform=self.transform1)
         else:
             self.path = path
             self.sorted_images = natsort.natsorted(os.listdir(self.path))          
@@ -46,5 +47,9 @@ class ChristmasImages(Dataset):
             return image, label
         else:           
             img = os.path.join(self.path,self.sorted_images[index])            
-            image = self.Test_transform(Image.open(img).convert("RGB")) 
+            image = self.transform2(Image.open(img).convert("RGB")) 
             return image
+
+
+
+
