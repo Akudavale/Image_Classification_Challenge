@@ -4,4 +4,4 @@ Data Augmentation: Applied image augmentation using torchvision.transforms for d
 
 Deep Learning Architecture: Employed EfficientNet architecture for transfer learning in convolutional neural networks (CNNs).
 
-Training and Validation: Achieved 95% training accuracy, and validated with 89.3% accuracy on Kaggle competitions using a diverse dataset.
+Training and Validation: Achieved 95% training accuracy, and validated with 96.2% accuracy on Kaggle competitions using a diverse dataset.
