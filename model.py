@@ -16,7 +16,7 @@ class Network(nn.Module):
     def __init__(self):
         super().__init__()        
         self.model = torchvision.models.efficientnet_b4(pretrained = True)
-        self.model.fc = nn.Sequential(nn.Linear(1792, output))
+        self.model.fc = nn.Sequential(nn.Linear(1792, 8 )) #output =8
 
     def forward(self, x):       
         x = self.model(x)

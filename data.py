@@ -4,13 +4,12 @@ from torchvision.datasets import ImageFolder
 import os
 from PIL import Image
 import natsort
-from pathlib import Path
 
 class ChristmasImages(Dataset):
     def __init__(self, path, training=True):
         super().__init__()
         self.training = training
-        self.path = Path(path)
+        self.path = path
         
         #For training data
         self.train_transform = transforms.Compose([
@@ -31,10 +30,11 @@ class ChristmasImages(Dataset):
             ])
         
         if self.training == True:
-            self.dataset = ImageFolder(root=self.path.joinpath('train'),transform=self.train_transform)
+            train_path = os.path.join(self.path, 'train')
+            self.dataset = ImageFolder(root=train_path,transform=self.train_transform)
         else:
-            self.path = path
-            self.img_sort = natsort.natsorted(os.listdir(self.path))          
+            test_path = os.path.join(self.path, 'val')
+            self.img_sort = natsort.natsorted(os.listdir(test_path))         
             
     def __len__(self):
         if self.training:
@@ -47,7 +47,7 @@ class ChristmasImages(Dataset):
             image, label = self.dataset[index]
             return image, label
         else:           
-            img = os.path.join(self.path,self.img_sort[index])            
+            img = os.path.join(self.path, 'val',self.img_sort[index])            
             image = self.test_transform(Image.open(img).convert("RGB")) 
             return image
 
