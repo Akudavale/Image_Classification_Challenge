@@ -65,9 +65,8 @@ if __name__ == '__main__':
 
     # Load the data and trasform
     path = Path("/home/g062386/DEEP Learning winter task/data")
-    test_path = Path("/home/g062386/DEEP Learning winter task/data/val")
     train_ds = ChristmasImages(path, training=True)
-    test_ds = ChristmasImages(test_path, training=False)
+    test_ds = ChristmasImages(path, training=False)
 
     # divide data in bathes through Dataloder
     train_loader = DataLoader(train_ds, batch_size=32,shuffle=True)
